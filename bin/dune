@@ -1,4 +1,4 @@
 (executable
  (public_name flowers_problem)
  (name main)
- (libraries base core core_unix.command_unix flowers_problem))
+ (libraries base core core_unix.command_unix garden))
