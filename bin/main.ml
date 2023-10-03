@@ -22,27 +22,30 @@ let parse file =
 let parse_constraints f = 
   In_channel.fold_lines f ~init:[] ~f: (fun acc line -> 
     match (String.split line ~on: ',') with 
-    |[f;qty;dist] -> ((String.get f 0), (int_of_string qty), (int_of_string dist))::acc
+    |[f;qty;dist] -> ((String.get f 0), ((int_of_string qty), (int_of_string dist)))::acc
     |_ -> raise (InvalidInput line))
+
 
 let run garden_file flower_file  = 
   In_channel.with_file garden_file ~f: (fun file -> 
    let height, blocked, width  = parse file in
    let constraints = In_channel.with_file flower_file ~f: (fun file ->
     parse_constraints file) in  
-   let module MyGarden = MakeGarden(
+   let module G = MakeGarden(
     struct
       let height = height
       let width = width
       let blocked = blocked
+      let constraints = constraints
   end) in
-  let g = MyGarden.empty in
-  Printf.printf "%s" (MyGarden.to_string g);
-  
-   let fmt = format_of_string  "height=%i width=%i\n" in 
-   (* List.iter blocked ~f: (fun (x,y) -> printf "(%d,%d)\n" x y); *)
-   List.iter constraints ~f: (fun (f,qty,dist) -> printf "%c, qty=%i, dist=%i \n" f qty dist);
-   Printf.printf fmt height width)
+  let module Solver = MkSolver(G) in
+  let solution = Solver.search in
+  let _ = match solution with
+  |Some(s) -> Printf.printf "%s" (G.to_string  s)
+  |_ -> Printf.printf "no solution" 
+in 
+
+   List.iter constraints ~f: (fun (f,(qty,dist)) -> printf "%c, qty=%i, dist=%i \n" f qty dist))
     
     
 
